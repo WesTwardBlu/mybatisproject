@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.westward.mapper.UsersOperation">
+  
+  
+  <select id="selectUsers" resultType="Users" parameterType="int">
+  	select * from users where id = #{id}
+  </select>
+  <delete id="deleteUsers" parameterType="int">
+  	delete from users where id = #{id}
+  </delete>
+  <update id="updateUsers" parameterType="Users">
+  	update users set age= #{age} where id= #{id}
+  </update>	
+  <insert id="insertUsers" parameterType="Users">
+  	insert into users(name,age,address) values(#{name},#{age},#{address})
+  </insert>
+  <insert id="insertUsersWithId" parameterType="Users" useGeneratedKeys="true" keyProperty="id">
+  	insert into users(name,age,address) values(#{name},#{age},#{address})
+  </insert>
+  
+  
+  <select id="selectAllUsers" resultType="Users">
+  	<if test="3>1">
+  		select * from
+  		<include refid="sometable" />
+  	</if>
+  </select>	
+  
+  <!-- 采用resultMap模式来映射结果集 -->
+  <select id="selectAllUsersByResultMap" resultMap="resultListUsers" parameterType="string">
+  	select * from <include refid="sometable" /> where name like #{name}
+  </select>
+  <resultMap type="Users" id="resultListUsers">
+  	<id column="id" property="id"/>
+  	<result column="name" property="name"/>
+  	<result column="age" property="age"/>
+  	<result column="address" property="address"/>
+  </resultMap>
+  
+  <!-- 多表查询 -->
+  <!-- 多对一：配置1 -->
+  <resultMap type="Article" id="selectUsersArticleList">
+  	<id property="id" column="aid"/>
+  	<result property="title" column="title"/>
+  	<result property="content" column="content"/>
+  	
+  	<association property="users" javaType="Users">
+  		<id property="id" column="id"/>
+  		<result property="name" column="name"/>
+  		<result property="age" column="age"/>
+  		<result property="address" column="address"/>
+  	</association>
+  </resultMap>
+  <select id="selectUsersArticleById" resultMap="selectUsersArticleList" parameterType="int">
+  	select users.id,users.name,users.age,users.address,article.id aid,article.title,article.content from users,article where users.id= #{id}
+  </select>
+  <!-- 多对一：配置2 -->
+  <resultMap type="Article" id="selectUsersArticleList2">
+  	<id property="id" column="aid"/>
+  	<result property="title" column="title"/>
+  	<result property="content" column="content"/>
+  	
+  	<association property="users" javaType="Users" resultMap="resultListUsers" />
+  </resultMap>
+  <select id="selectUsersArticleById2" resultMap="selectUsersArticleList2" parameterType="int">
+  	select users.id,users.name,users.age,users.address,article.id aid,article.title,article.content from users,article where users.id= #{id}
+  </select>
+  
+  <!-- 动态sql查询  if -->
+  <select id="selectUsersIf" resultMap="resultListUsers" parameterType="Users"> 
+  	select * from users where 1=1
+  	<if test="name!=null">
+  		AND name=#{name}
+  	</if>
+  	<if test="address!=null">
+  		AND address=#{address}
+  	</if>
+  </select>
+  
+  <!-- 动态sql  choose -->
+  <select id="selectUsersChoose" resultMap="resultListUsers" parameterType="Users">
+  	select * from users where 1=1
+  	<choose>
+  		<when test="id!=0">
+  			AND id=#{id}
+  		</when>
+  		<when test="name!=null">
+  			AND name=#{name}
+  		</when>
+  		<otherwise>
+  			AND address=#{address}
+  		</otherwise>
+  	</choose>	
+  </select>
+  
+  <!-- 动态sql  trim -->
+  <select id="selectUsersTrim" resultMap="resultListUsers" parameterType="Users">
+  	select * from users
+  	<trim prefix="where" prefixOverrides="and">
+  		<if test="name!=null">
+  			name=#{name}
+  		</if>
+  		<if test="address!=null">
+  			 and address=#{address}
+  		</if>
+  	</trim>	
+  </select>
+  
+  <!-- 动态sql  where -->
+  <select id="selectUsersWhere" resultMap="resultListUsers" parameterType="Users">
+  	select * from users
+  	<where >
+  		<if test="name!=null">
+  		and name=#{name}
+  		</if>
+  		<if test="address!=null">
+  		and address=#{address}
+  		</if>
+  	</where>
+  </select>
+  
+  <!-- 动态sql  set -->
+  <update id="updateUsersSet" parameterType="Users">
+  	update users
+  	<set>
+  		<if test="name!=null">
+  		name=#{name},
+  		</if>
+  		<if test="address!=null">
+  		address=#{address},
+  		</if>
+  	</set>
+  	where id=#{id}
+  </update>
+  
+  <!-- 动态sql  foreach list-->
+  <select id="selectUserForeach" resultType="Users">
+  	select * from users where id in
+  	<foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+  		#{item}
+  	</foreach>
+  </select>
+  <!-- 动态sql  foreach array-->
+  <select id="selectUserForeachArray" resultType="Users">
+  	select * from users where id in
+  	<foreach collection="array" item="item" index="index" open="(" close=")" separator=",">
+  		#{item}
+  	</foreach>
+  </select>
+  <!-- 动态sql  foreach Map-->
+  <select id="selectUserForeachMap" resultType="Users">
+  	select * from users where id in
+  	<foreach collection="ids" item="item" index="index" open="(" close=")" separator=",">
+  		#{item}
+  	</foreach>
+  </select>
+  
+  
+  
+  
+  
+  <!-- 设置sql变量 -->  
+  <sql id="sometable">
+  	users
+  </sql>
+  
+  
+  
+</mapper>
